@@ -62,10 +62,16 @@ class GreekToGreeklish(object):
         for (dirpath, dirnames, filenames) in walk(self.input):
             self.f.extend(filenames)
             break
-    def printfilenames(self):
-        print(self.f)
+    def printfilenames(self, f_list = None):
+        if f_list:
+            pass
+        else:
+            f_list = self.f
+        for file in f_list:
+            print(file)
 
     def transform(self):
+        file_list = []
         for file in self.f:
             file = list(file)
             newfile = list(file)
@@ -83,9 +89,10 @@ class GreekToGreeklish(object):
                 src_file,
                 dest_file
             )
-            print(''.join(newfile))
-
+            file_list.append(''.join(newfile))
+        return file_list
 
 if __name__ == '__main__':
     app = GreekToGreeklish()
-    app.transform()
+    test = app.transform()
+    app.printfilenames(test)
