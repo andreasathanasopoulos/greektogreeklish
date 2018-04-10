@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os, argparse, shutil
 from os import walk
+from itertools import islice
 
 class GreekToGreeklish(object):
 
@@ -70,18 +71,49 @@ class GreekToGreeklish(object):
         for file in f_list:
             print(file)
 
+    def check_exists_n_rename(self, file, append=0):
+        original_file = file
+        if append != 0:
+            filename, file_extension = os.path.splitext(file)
+            file = filename + "(" + str(append) + ")" + file_extension
+        if not os.path.isfile(file):
+            return file
+        else:
+            append+=1
+            return self.check_exists_n_rename(original_file, append)
+
     def transform(self):
         file_list = []
         for file in self.f:
             file = list(file)
             newfile = list(file)
             for i, letter in enumerate(newfile):
+                diph = ''
+                next_letter = ''
+                # Remove accent on current letter
                 if letter in self.ACCENT_MAPPING:
-                    letter = self.ACCENT_MAPPING[letter]
-                if letter in self.GR_TO_ENG:
+                    newfile[i] = self.ACCENT_MAPPING[letter]
+                # Check for not being out of range
+                if i != len(newfile)-1:
+                    next_letter = newfile[i+1]
+                    # Check if next_letter has accent and remove it
+                    if next_letter in self.ACCENT_MAPPING:
+                        newfile[i+1] = self.ACCENT_MAPPING[newfile[i+1]]
+                    # Make the diphthong
+                    diph = newfile[i]+newfile[i+1]
+                if diph in self.GR_TO_ENG:
+                    # Set diphthong from list
+                    newfile[i] = self.GR_TO_ENG[diph]
+                    # 'Remove' next letter because we had diphthong
+                    newfile[i+1] = ''
+                elif letter in self.GR_TO_ENG:
+                    # Set letter from list
                     newfile[i] = self.GR_TO_ENG[letter]
             src_file = os.path.join(self.input, ''.join(file))
-            dest_file = os.path.join(self.output, ''.join(newfile))
+            # dest_file = os.path.join(self.output, ''.join(newfile))
+            dest_file = self.check_exists_n_rename(os.path.join(self.output, ''.join(newfile)))
+            print(dest_file)
+            # If not in the same folder, copy and rename
             if self.input != self.output:
                 shutil.copy(src_file, self.output)
                 src_file = os.path.join(self.output, ''.join(file))
